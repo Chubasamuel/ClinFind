@@ -13,8 +13,6 @@ android {
         applicationId "com.chubasamuel.clinfind"
         minSdk 28
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,6 +28,18 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            manifestPlaceholders = [
+                    appIcon : "@mipmap/app_icon",
+                    appIconRound :"@mipmap/app_icon_round"
+            ]
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            manifestPlaceholders = [
+                    appIcon : "@mipmap/ic_launcher",
+                    appIconRound :"@mipmap/ic_launcher_round"
+            ]
         }
     }
     compileOptions {

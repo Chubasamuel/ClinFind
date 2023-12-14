@@ -31,28 +31,10 @@ class DCORPrefs(private val context:Context?){
         if(saveImmediately){editor.commit()}
         else{ editor.apply()}
     }
-    fun saveCurTabIndex(key:String,value:Int){
-        save(key,value)
+    fun saveAppDataFetchedForFirstTime(){
+        save("dcor_clinfind_app_data_first_time",true)
     }
-    fun saveExportTypeByValue(b:Boolean){
-        save("dcor_data_dose_value_export",b)
-    }
-    fun saveExportHeaderType(v:Int){
-        save("dcor_data_dose_header_export",v)
-    }
-    fun getExportTypeByValue()=check("dcor_data_dose_value_export",true)
-    fun getExportHeaderType()=check("dcor_data_dose_header_export",0)
 
-    fun saveBoxAtStart(v:Boolean){
-        save("dcor_data_dose_box_at_start",v)
-    }
-    fun getBoxAtStart() = check("dcor_data_dose_box_at_start",true)
+    fun getAppDataFetchedForFirstTime()=check("dcor_clinfind_app_data_first_time",false)
 
-    fun saveShowQLabel(v:Boolean){
-        save("dcor_data_dose_show_q_label",v)
-    }
-    fun getShowQLabel() = check("dcor_data_dose_show_q_label",true)
-
-    fun saveApiAuthToken(token:String){save("dcor_data_dose_api_auth_token",token)}
-    fun getApiAuthToken() = check("dcor_data_dose_api_auth_token","")
 }

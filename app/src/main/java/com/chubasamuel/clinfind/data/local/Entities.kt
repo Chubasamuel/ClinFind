@@ -1,9 +1,10 @@
 package com.chubasamuel.clinfind.data.local
 
-import androidx.room.Embedded
+import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+@Keep
 @Entity(tableName = "facility")
 data class Facility(
     @PrimaryKey(autoGenerate = true) val id:Int?=null,

@@ -31,8 +31,11 @@ fun <T> getData( apiReq: suspend () -> Resource<T>,
             response.data?.let { trySend(Resource.success(it)); saveRes(it) }
 
         } else if (response.status == Resource.Status.ERROR) {
-            trySend(Resource.error("Error fetching data: "+ (response.message?:"Unidentified error occurred while fetching data over the internet")))
-        }}
+            trySend(Resource.error("Error fetching data over the internet."))
+        }
+            channel.close()
+        }
+
         awaitClose{}
     }
 fun <T> getDataV2(dbQuery:  () -> Flow<T>): Flow<Resource<T>> =

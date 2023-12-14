@@ -6,6 +6,7 @@ import com.chubasamuel.clinfind.data.local.Facility
 import com.chubasamuel.clinfind.data.local.Search
 import com.chubasamuel.clinfind.data.remote.Resource
 import com.chubasamuel.clinfind.data.repository.DataRepository
+import com.chubasamuel.clinfind.util.DCORPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,9 +15,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AppViewModel @Inject constructor(private val repo: DataRepository) : ViewModel(){
+class AppViewModel @Inject constructor(private val repo: DataRepository,
+    private val dcorPrefs: DCORPrefs
+    ) : ViewModel(){
 
-    private val _facilities = MutableStateFlow<Resource<List<Facility>>>(Resource.loading())
+    private val _facilities = MutableStateFlow<Resource<List<Facility>?>>(Resource.loading())
     val facilities = _facilities.asStateFlow()
     private val _lgaS = MutableStateFlow<List<String>>(listOf())
     val lgaS = _lgaS.asStateFlow()
@@ -29,7 +32,8 @@ class AppViewModel @Inject constructor(private val repo: DataRepository) : ViewM
     private val _snack = MutableStateFlow<String?>(null)
     val snack = _snack.asStateFlow()
 
-    private var jobSearch:Job?=null
+    private var jobSearch:Job? = null
+    private var jobFetch:Job? = null
 
     init{
         viewModelScope.launch {
@@ -54,17 +58,30 @@ class AppViewModel @Inject constructor(private val repo: DataRepository) : ViewM
             tt.collect{if(it.status==Resource.Status.SUCCESS){
                 it.data?.let{d->_types.value=it.data}}}
         }
+        getFacilitiesLocal()
+        getFacilitiesFromApi()
+    }
+    private fun getFacilitiesLocal(){
+        if(dcorPrefs.getAppDataFetchedForFirstTime()){
         viewModelScope.launch {
             repo.getFacilitiesLocal().collect{
                 _facilities.value=it
             }
-        }
-        getFacilitiesFromApi()
+        }}
     }
-    private fun getFacilitiesFromApi(){
-        viewModelScope.launch {
+    fun getFacilitiesFromApi(){
+        jobFetch=viewModelScope.launch {
+            val gotFirstTime = dcorPrefs.getAppDataFetchedForFirstTime()
         repo.getFacilitiesFromApi().collect{
-            _snack.value = it.message
+            if(!gotFirstTime){
+                _facilities.value=it
+                if(it.status==Resource.Status.SUCCESS){
+                    dcorPrefs.saveAppDataFetchedForFirstTime()
+                    getFacilitiesLocal()
+                    jobFetch?.cancel()
+                }
+            }else{
+            _snack.value = it.message}
         }}
     }
     fun resetSnack(){_snack.value=null}

@@ -1,11 +1,18 @@
 package com.chubasamuel.clinfind.ui.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -23,18 +30,20 @@ import com.chubasamuel.clinfind.data.local.Search
 import com.chubasamuel.clinfind.data.remote.HandleComposeResource
 import com.chubasamuel.clinfind.data.remote.Resource
 import com.chubasamuel.clinfind.data.remote.handleResource
+import com.chubasamuel.clinfind.ui.components.ErrorScreenComp
 import com.chubasamuel.clinfind.ui.components.FacilityComp
 import com.chubasamuel.clinfind.ui.components.SearchComp
 import com.chubasamuel.clinfind.ui.components.WorkProgress
+import com.chubasamuel.clinfind.ui.theme.CFT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(snackHostState: SnackbarHostState,snackText:String?,
-               facilities: Resource<List<Facility>>,
+               facilities: Resource<List<Facility>?>,
                filterSearch: FilterSearch, onSearch:(Search)->Unit,
-               goToAbout:()->Unit){
+               goToAbout:()->Unit, retryFetch:()->Unit){
     LaunchedEffect(snackText){
     if(snackText!=null){
         CoroutineScope(Dispatchers.IO).launch {
@@ -50,7 +59,9 @@ fun HomeScreen(snackHostState: SnackbarHostState,snackText:String?,
             var shouldShow by rememberSaveable{mutableStateOf(true)}
             if(shouldShow){
             WorkProgress(message=r.message?:"Unknown error occurred while fetching data",
-                r.status, resetWork = {shouldShow=false})}},
+                r.status, resetWork = {shouldShow=false})}
+               ErrorScreenComp { retryFetch() }
+                },
         onSuccess = {
             facilities.data?.let{
                 Column(

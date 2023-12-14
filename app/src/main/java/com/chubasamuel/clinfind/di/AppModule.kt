@@ -7,6 +7,7 @@ import com.chubasamuel.clinfind.data.remote.ApiSource
 import com.chubasamuel.clinfind.data.remote.Requests
 import com.chubasamuel.clinfind.data.repository.DataRepository
 import com.chubasamuel.clinfind.util.DCORPrefs
+import com.chubasamuel.clinfind.util.Links
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -43,7 +44,7 @@ object AppModule {
     @Singleton
     @Provides
     fun provideRetrofit(gson: Gson): Retrofit = Retrofit.Builder()
-        .baseUrl("https://chubasamuel.github.io/")
+        .baseUrl(Links.baseLink)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 

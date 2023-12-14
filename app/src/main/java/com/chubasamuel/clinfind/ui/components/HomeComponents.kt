@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,7 +26,10 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -286,6 +290,28 @@ fun FacilityComp(f:Facility){
                     Text(contacts ?: "[Contacts not specified]", color = CFT.colors.textColor)
                 }}
         }}
+    }
+}
+
+@Composable
+fun ErrorScreenComp(retryFetch:()->Unit){
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(20.dp), verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally){
+        Row{
+            Icon(Icons.Filled.Warning,null,tint= CFT.colors.red)
+            Spacer(Modifier.width(15.dp))
+            Text("Error occurred while fetching data over the internet.\n" +
+                    "Please check your network and try again.")
+        }
+        Spacer(Modifier.height(40.dp))
+        Button(onClick = { retryFetch() }) {
+            Icon(Icons.Filled.Refresh,null,tint=CFT.colors.searchIconTint)
+            Spacer(Modifier.width(5.dp))
+            Text("Retry")
+        }
     }
 }
 

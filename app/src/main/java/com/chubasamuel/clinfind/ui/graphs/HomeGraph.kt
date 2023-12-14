@@ -35,7 +35,7 @@ fun NavGraphBuilder.homeGraph(nav:NavHostController,snackHostState:SnackbarHostS
                 vM.snack.flowWithLifecycle(lCo.lifecycle, Lifecycle.State.STARTED)
             }
             val snackText by snackAware.collectAsState(initial = null)
-            val exF: Resource<List<Facility>> by fAware.collectAsState(initial = Resource.loading())
+            val exF: Resource<List<Facility>?> by fAware.collectAsState(initial = Resource.loading())
 
             val filtersAware = remember(vM.lgaS,vM.states,vM.specialties,vM.types,lCo) {
                 combine(vM.lgaS,vM.states,vM.specialties,vM.types){
@@ -48,7 +48,8 @@ fun NavGraphBuilder.homeGraph(nav:NavHostController,snackHostState:SnackbarHostS
                 //resetSnack ={vM.resetSnack()} ,
                 facilities = exF, filterSearch = filtersCollected,
                 onSearch = {s->vM.search(s)},
-                goToAbout = { nav.navigate(Routes.about_app)}
+                goToAbout = { nav.navigate(Routes.about_app)},
+                retryFetch = {vM.getFacilitiesFromApi()}
                 )
 
         }
