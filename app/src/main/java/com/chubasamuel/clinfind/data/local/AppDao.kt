@@ -26,7 +26,7 @@ interface AppDao {
     fun getFacilitiesForState(state:String): Flow<List<Facility>>
 
     @RawQuery(observedEntities = [Facility::class])
-    fun searchWithFilter(query:SupportSQLiteQuery):Flow<List<Facility>>
+    fun search(query:SupportSQLiteQuery):Flow<List<Facility>>
 
     @Query("DELETE FROM facility")
     fun clearFacilities()

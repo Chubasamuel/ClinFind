@@ -18,12 +18,23 @@ fun Search.getFilterQuery():SimpleSQLiteQuery{
     val s=this
     var query = "SELECT * FROM facility WHERE ${s.param} LIKE ? "
     val li = mutableListOf<String>()
-    li.add(s.paramValue)
+
+    val paramValues=s.paramValue.split(Regex("\\s+"))
+    li.add("%"+paramValues[0]+"%")
+    if(paramValues.size>1){
+    for(i in 1 until paramValues.size){
+        query+=" AND ${s.param} LIKE ? "
+        li.add("%${paramValues[i]}%")
+    }}
+
+    query+=" OR ${s.param} LIKE ? "
+    li.add("%"+s.paramValue+"%")
 
     if(s.lga!=null){query+=" AND lga=? "; li.add(s.lga)}
     if(s.state!=null){query+=" AND state=? "; li.add(s.state)}
-    if(s.specialty!=null){query+=" AND specialty LIKE ? "; li.add(s.specialty)}
+    if(s.specialty!=null){query+=" AND specialty LIKE ? "; li.add("%"+s.specialty+"%")}
     if(s.type!=null){query+=" AND type=? "; li.add(s.type)}
+    query+=" ORDER BY name"
     return SimpleSQLiteQuery(query, li.toTypedArray())
 }
 

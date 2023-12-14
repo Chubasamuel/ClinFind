@@ -1,6 +1,10 @@
 package com.chubasamuel.clinfind.ui.components
 
-import android.util.Log
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,15 +16,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -35,28 +42,65 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import com.chubasamuel.clinfind.R
 import com.chubasamuel.clinfind.data.local.Facility
 import com.chubasamuel.clinfind.data.local.FilterSearch
 import com.chubasamuel.clinfind.data.local.FilterSearchBy
 import com.chubasamuel.clinfind.data.local.Search
+import com.chubasamuel.clinfind.ui.theme.CFT
+import com.chubasamuel.clinfind.ui.theme.alertBgShape
+import com.chubasamuel.clinfind.util.Links
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchComp(onSearch:(Search)->Unit, filterSearch: FilterSearch){
+fun SearchComp(onSearch:(Search)->Unit, filterSearch: FilterSearch, goToAbout:()->Unit){
     var searchText by remember { mutableStateOf("") }
     val searchByList = listOf("name", "direction", "owner", "about")
     var selectedSearchBy by remember { mutableStateOf(searchByList[0]) }
     var search by remember{ mutableStateOf(Search(selectedSearchBy,searchText))}
+    var revealFilters by remember { mutableStateOf(false) }
     val filters = FilterSearchBy.values()
+    var job:Job? = null
+    val context = LocalContext.current
+    fun triggerSearch(){
+        job?.cancel()
+        job= CoroutineScope(Dispatchers.IO).launch {
+            delay(1500)
+            onSearch(search)
+        }
+    }
+    fun onMenuSelect(sel:Int){
+        when(sel){
+            0->{addLocation(context)}
+            1->{goToAbout()}
+            2->{launchPlayStore(context) }
+            3->{contactDev(context)}
+        }
+    }
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)) {
-        val containerColor = Color.LightGray
-        Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){ TextField(value = searchText, onValueChange = { s->searchText=s}, placeholder = {Text("Search...")},
+        val containerColor = CFT.colors.cardBg
+        Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
+            TextField(value = searchText, onValueChange = {
+                    s->searchText=s
+                search=search.copy(paramValue = searchText)
+                triggerSearch()
+                                                          },
+                placeholder = {Text("Search...", color=CFT.colors.textColor)},
             colors= TextFieldDefaults.colors(
                 disabledTextColor = Color.Transparent,
                 focusedContainerColor = containerColor,
@@ -65,28 +109,79 @@ fun SearchComp(onSearch:(Search)->Unit, filterSearch: FilterSearch){
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
+                focusedTextColor = CFT.colors.textColor
             ),
-            leadingIcon = {Icon(Icons.Filled.Search,null)},
+            leadingIcon = {Icon(Icons.Filled.Search,null, tint = CFT.colors.searchIconTint)},
+            trailingIcon= {
+                var expanded by remember { mutableStateOf(false) }
+                LogoMenu(expanded, {e->expanded=!e},
+                listOf("Add location","About", "Rate app","Contact support"), {i->onMenuSelect(i)}
+            )},
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier.fillMaxWidth()
             )}
-        Spacer(Modifier.height(8.dp))
-        SearchByDropdown(selected = selectedSearchBy,li = searchByList, onSelect = {s->selectedSearchBy=s})
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.SpaceEvenly){
-            for( f in filters){
-                val liData = when(f){
-                    FilterSearchBy.lga->{filterSearch.lgas}
-                    FilterSearchBy.state->{filterSearch.states}
-                    FilterSearchBy.specialty->{filterSearch.specialties}
-                    FilterSearchBy.type->{filterSearch.types}
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+           IconButton(onClick = { revealFilters=!revealFilters }) {
+
+           Icon(if(revealFilters)
+                Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown, null, tint=CFT.colors.searchIconTint)
+        }}
+        AnimatedVisibility(visible = revealFilters) {
+            Spacer(Modifier.height(8.dp))
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(color = CFT.colors.cardBg, shape = alertBgShape)
+                    .padding(15.dp)){
+            SearchByDropdown(
+                selected = selectedSearchBy,
+                li = searchByList,
+                onSelect = {
+                        s -> selectedSearchBy = s
+                    search = search.copy(param=selectedSearchBy)
+                    triggerSearch()
+                })
+            Spacer(Modifier.height(8.dp))
+            Text("Filters:", color=CFT.colors.textColor)
+            Row(modifier=Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly) {
+                for (f in filters) {
+                    val liData = when (f) {
+                        FilterSearchBy.lga -> {
+                            filterSearch.lgas
+                        }
+
+                        FilterSearchBy.state -> {
+                            filterSearch.states
+                        }
+
+                        FilterSearchBy.specialty -> {
+                            filterSearch.specialties
+                        }
+
+                        FilterSearchBy.type -> {
+                            filterSearch.types
+                        }
+                    }
+                    FilterDropdown(search = search, by = f, li = liData,
+                        onSelect = { fb, s -> search = search.mutateFilterBy(fb, s); triggerSearch() })
                 }
-                FilterDropdown(search = search,by = f, li =liData ,
-                    onSelect ={fb,s->search=search.mutateFilterBy(fb,s)} )
             }
+            Spacer(Modifier.height(10.dp))
+            Spacer(modifier = Modifier
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(color = CFT.colors.searchIconTint))
+        }}
+    }
+}
+@Composable
+fun LogoMenu(expanded:Boolean=false, onLogoClick:(Boolean)->Unit,li:List<String>, onSelect:(Int)->Unit){
+    Image(ImageBitmap.imageResource(R.mipmap.clinfind_logo), null, Modifier.clickable { onLogoClick(expanded) })
+    DropdownMenu(expanded = expanded, onDismissRequest = { onLogoClick(true) }) {
+        for(i in li.indices){
+            DropdownMenuItem(text = { Text(li[i]) }, onClick = { onLogoClick(true); onSelect(i) })
         }
-        Spacer(Modifier.height(10.dp))
-        Spacer(modifier = Modifier.height(1.dp).fillMaxWidth().background(color=Color.Black))
     }
 }
 fun Search.mutateFilterBy(fb:FilterSearchBy,value:String):Search{
@@ -102,8 +197,8 @@ fun SearchByDropdown(selected:String,li:List<String>, onSelect:(String)->Unit){
     var expanded by remember { mutableStateOf(false) }
     Column{
         Row{
-            Text("Search by($selected)", Modifier.clickable { expanded=!expanded })
-            Icon(Icons.Filled.MoreVert,null, Modifier.clickable { expanded=!expanded })
+            Text("Search by($selected)", Modifier.clickable { expanded=!expanded }, color=CFT.colors.textColor)
+            Icon(Icons.Filled.MoreVert,null, Modifier.clickable { expanded=!expanded }, tint=CFT.colors.searchIconTint)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded=false }) {
             for(s in li){
@@ -115,21 +210,22 @@ fun SearchByDropdown(selected:String,li:List<String>, onSelect:(String)->Unit){
 @Composable
 fun FilterDropdown(search:Search,by:FilterSearchBy, li:List<String>, onSelect:(FilterSearchBy,String)->Unit){
     var expanded by remember { mutableStateOf(false) }
-    val ss = when(search.type){
-        by.label->search.javaClass.getDeclaredField(by.name).get(search) as? String
-        else->null
+    val ss = when(by){
+        FilterSearchBy.lga->search.lga
+        FilterSearchBy.type->search.type
+        FilterSearchBy.specialty->search.specialty
+        FilterSearchBy.state->search.state
     }
-    Log.w("DCOR DEBUG","ss-->$ss")
+
     Column{
-        Row{Text(by.label,Modifier.clickable { expanded=!expanded })
-        ss?.let {
-            Text(ss,Modifier.clickable { expanded=!expanded })
-        }
-        Icon(Icons.Filled.ArrowDropDown,null,Modifier.clickable { expanded=!expanded })
+        Row{Text(by.label,Modifier.clickable { expanded=!expanded }, color=CFT.colors.textColor)
+        Icon(Icons.Filled.ArrowDropDown,null,Modifier.clickable { expanded=!expanded }, tint=CFT.colors.searchIconTint)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded=false }) {
             for(s in li){
-                DropdownMenuItem(text = { Text(s) }, onClick = { expanded=false; onSelect(by,s) })
+                DropdownMenuItem(text = {
+                    if(s==ss){Text(s,color=CFT.colors.primary)}
+                        else {Text(s) }}, onClick = { expanded=false; onSelect(by,s) })
             }
         }
     }
@@ -137,31 +233,77 @@ fun FilterDropdown(search:Search,by:FilterSearchBy, li:List<String>, onSelect:(F
 
 @Composable
 fun FacilityComp(f:Facility){
+    var revealAddress by remember { mutableStateOf(false) }
     Column(
         Modifier
             .fillMaxWidth()
-            //.padding(5.dp)
-            .background(color = Color.LightGray, shape = RoundedCornerShape(15.dp))
-            .padding(10.dp)) {
-        Row(horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically) {
+            .background(color = CFT.colors.cardBg, shape = RoundedCornerShape(15.dp))
+            .padding(15.dp)) {
+
+        /*Row(Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End){f.type?.let{ElevatedButton(onClick = { /*TODO*/ }, /*modifier = Modifier.weight(0.3f)*/){
+            Text(f.type, fontSize = TextUnit(3f, TextUnitType.Em))
+        }}}*/
             Text(text=f.name, modifier = Modifier
-                .weight(0.7f)
-                .padding(end = 5.dp))
-            f.type?.let{ElevatedButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(0.3f)){
-                Text(f.type, fontSize = TextUnit(3f, TextUnitType.Em))
-            }}
+                .padding(end = 5.dp), color = CFT.colors.textColor, fontWeight = FontWeight.Bold ,fontSize = TextUnit(6f, TextUnitType.Em))
+        Column {
+            Text(f.about?.take(100)?:"",
+                modifier=Modifier.padding(horizontal = 10.dp),
+                fontStyle = FontStyle.Italic, color = CFT.colors.textColor)
+            Spacer(Modifier.height(10.dp))
         }
-        Row {
-            Text(f.about?.take(100)?:"")
-        }
-        //Row {
-            Text(f.specialty)
-            Row {
-              Icon(Icons.Filled.LocationOn, contentDescription =null )
+
+            Row{
+                Icon(Icons.Filled.Favorite,null, tint=CFT.colors.red)
                 Spacer(Modifier.width(5.dp))
-                Text("${f.lga}, ${f.state}")
+                Text(f.specialty,fontSize = TextUnit(4f, TextUnitType.Em), color=CFT.colors.textColor)
             }
-      //  }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AnimatedVisibility(visible = !revealAddress) {
+                    Row{Icon(Icons.Filled.LocationOn, contentDescription =null, tint=CFT.colors.green)
+                    Spacer(Modifier.width(5.dp))
+                    Text("${f.lga}, ${f.state}", color=CFT.colors.textColor)}
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { revealAddress=!revealAddress}) {
+                Icon(if(revealAddress)
+                    Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown, contentDescription =null, tint=CFT.colors.searchIconTint )
+            }}
+        AnimatedVisibility(visible = revealAddress) {
+            Column(Modifier.fillMaxWidth()){
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.LocationOn, contentDescription =null,tint=CFT.colors.green )
+                Spacer(Modifier.width(5.dp))
+                Column{
+                    Text(f.direction?:"[Direction not specified]", color=CFT.colors.textColor)
+                    Text("${f.lga}, ${f.state}", color = CFT.colors.textColor)}}
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val contacts by remember { derivedStateOf { if(f.contact.isNullOrEmpty()){null}else{f.contact.joinToString(separator = ", ")} }}
+                Icon(Icons.Filled.Phone, contentDescription =null, tint=CFT.colors.blue )
+                Spacer(Modifier.width(5.dp))
+                SelectionContainer {
+                    Text(contacts ?: "[Contacts not specified]", color = CFT.colors.textColor)
+                }}
+        }}
     }
+}
+
+private fun contactDev(context:Context){
+    val mailto="mailto:dev.chubasamuel@gmail.com?"+"subject="+ Uri.encode("Feedback on ClinFind Android app")+
+            "&body="+Uri.encode(" ")
+    val intent=Intent(Intent.ACTION_SENDTO)
+    intent.data = Uri.parse(mailto)
+    context.startActivity(intent)
+}
+private fun launchPlayStore(context: Context){
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data =
+        Uri.parse("http://play.google.com/store/apps/details?id=com.chubasamuel.clinfind")
+    val chooser = Intent.createChooser(intent, "launch Play store")
+    context.startActivity(chooser)
+}
+
+private fun addLocation(context: Context){
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Links.addLocation)))
 }

@@ -18,7 +18,7 @@ class DataRepository @Inject constructor(private val dao:AppDao, private val api
     fun getFForLga(lga:String) = getDataV2 { dao.getFacilitiesForLga(lga) }
     fun getFForState(state:String) = getDataV2 { dao.getFacilitiesForLga(state) }
     fun getFForSpecialty(specialty:String) = getDataV2 { dao.getFacilitiesForLga(specialty) }
-    fun searchWithFilters(s:Search) = getDataV2 { dao.searchWithFilter(s.getFilterQuery()) }
+    fun search(s:Search) = getDataV2 { dao.search(s.getFilterQuery()) }
 
     fun getLGAs() =  getDataV2{dao.getUniqueLGAs()}
     fun getStates() =  getDataV2{dao.getUniqueStates()}

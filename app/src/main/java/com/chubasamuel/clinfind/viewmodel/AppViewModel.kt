@@ -3,13 +3,13 @@ package com.chubasamuel.clinfind.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chubasamuel.clinfind.data.local.Facility
+import com.chubasamuel.clinfind.data.local.Search
 import com.chubasamuel.clinfind.data.remote.Resource
 import com.chubasamuel.clinfind.data.repository.DataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,6 +28,8 @@ class AppViewModel @Inject constructor(private val repo: DataRepository) : ViewM
     val types = _types.asStateFlow()
     private val _snack = MutableStateFlow<String?>(null)
     val snack = _snack.asStateFlow()
+
+    private var jobSearch:Job?=null
 
     init{
         viewModelScope.launch {
@@ -66,4 +68,13 @@ class AppViewModel @Inject constructor(private val repo: DataRepository) : ViewM
         }}
     }
     fun resetSnack(){_snack.value=null}
+
+    fun search(s:Search){
+        jobSearch?.cancel()
+        jobSearch = viewModelScope.launch {
+            repo.search(s).collect{
+               if(it.status==Resource.Status.SUCCESS) _facilities.value=it
+            }
+        }
+    }
 }

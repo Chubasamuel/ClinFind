@@ -11,16 +11,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.chubasamuel.clinfind.data.local.Facility
 import com.chubasamuel.clinfind.data.local.FilterSearch
 import com.chubasamuel.clinfind.data.remote.Resource
+import com.chubasamuel.clinfind.ui.screens.AboutAppScreen
 import com.chubasamuel.clinfind.ui.screens.HomeScreen
 import com.chubasamuel.clinfind.viewmodel.AppViewModel
 import kotlinx.coroutines.flow.combine
 
-fun NavGraphBuilder.homeGraph(snackHostState:SnackbarHostState){
+fun NavGraphBuilder.homeGraph(nav:NavHostController,snackHostState:SnackbarHostState){
     navigation(startDestination = Routes.home, Routes.start_home){
         composable(Routes.home){
             val vM: AppViewModel = hiltViewModel()
@@ -41,23 +44,16 @@ fun NavGraphBuilder.homeGraph(snackHostState:SnackbarHostState){
             }
             val filtersCollected by filtersAware.collectAsState(initial = FilterSearch(listOf(),listOf(),listOf(),listOf()))
 
-
             HomeScreen(snackHostState = snackHostState, snackText = snackText,
                 //resetSnack ={vM.resetSnack()} ,
-                facilities = exF, filterSearch = filtersCollected)
+                facilities = exF, filterSearch = filtersCollected,
+                onSearch = {s->vM.search(s)},
+                goToAbout = { nav.navigate(Routes.about_app)}
+                )
 
-            LaunchedEffect(Unit){
-               // vM.getFacilitiesAndSave()
-                /*lCo.lifecycleScope.launch {
-                    lCo.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                        val combined = combine(vM.lgaS,vM.states,vM.specialties,vM.types){
-                                l,s,sp,t->FilterSearch(
-                            lgas=l,states=s, specialties = sp, types = t
-                        )
-                        }
-                    }
-                }*/
-            }
+        }
+        composable(Routes.about_app){
+            AboutAppScreen()
         }
     }
 
