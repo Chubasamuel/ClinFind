@@ -16,7 +16,7 @@ data class Search(
 
 fun Search.getFilterQuery():SimpleSQLiteQuery{
     val s=this
-    var query = "SELECT * FROM facility WHERE ${s.param} LIKE ? "
+    var query = "SELECT * FROM facility WHERE (${s.param} LIKE ? "
     val li = mutableListOf<String>()
 
     val paramValues=s.paramValue.split(Regex("\\s+"))
@@ -27,7 +27,7 @@ fun Search.getFilterQuery():SimpleSQLiteQuery{
         li.add("%${paramValues[i]}%")
     }}
 
-    query+=" OR ${s.param} LIKE ? "
+    query+=" OR ${s.param} LIKE ? )"
     li.add("%"+s.paramValue+"%")
 
     if(s.lga!=null){query+=" AND lga=? "; li.add(s.lga)}

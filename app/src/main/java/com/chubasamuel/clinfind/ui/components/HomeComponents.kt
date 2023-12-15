@@ -167,7 +167,9 @@ fun SearchComp(onSearch:(Search)->Unit, filterSearch: FilterSearch, goToAbout:()
                             filterSearch.types
                         }
                     }
-                    FilterDropdown(search = search, by = f, li = liData,
+                    val li=mutableListOf("All")
+                    li.addAll(liData)
+                    FilterDropdown(search = search, by = f, li = li,
                         onSelect = { fb, s -> search = search.mutateFilterBy(fb, s); triggerSearch() })
                 }
             }
@@ -189,11 +191,13 @@ fun LogoMenu(expanded:Boolean=false, onLogoClick:(Boolean)->Unit,li:List<String>
     }
 }
 fun Search.mutateFilterBy(fb:FilterSearchBy,value:String):Search{
+    val v = if(value=="All") null else value
+
     return when(fb){
-        FilterSearchBy.lga->{this.copy(lga=value)}
-        FilterSearchBy.state->{this.copy(state=value)}
-        FilterSearchBy.specialty->{this.copy(specialty=value)}
-        FilterSearchBy.type->{this.copy(type=value)}
+        FilterSearchBy.lga->{this.copy(lga=v)}
+        FilterSearchBy.state->{this.copy(state=v)}
+        FilterSearchBy.specialty->{this.copy(specialty=v)}
+        FilterSearchBy.type->{this.copy(type=v)}
     }
 }
 @Composable
@@ -228,7 +232,7 @@ fun FilterDropdown(search:Search,by:FilterSearchBy, li:List<String>, onSelect:(F
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded=false }) {
             for(s in li){
                 DropdownMenuItem(text = {
-                    if(s==ss){Text(s,color=CFT.colors.primary)}
+                    if(s==ss||(ss==null && s=="All")){Text(s,color=CFT.colors.optionsSel)}
                         else {Text(s) }}, onClick = { expanded=false; onSelect(by,s) })
             }
         }
@@ -244,10 +248,6 @@ fun FacilityComp(f:Facility){
             .background(color = CFT.colors.cardBg, shape = RoundedCornerShape(15.dp))
             .padding(15.dp)) {
 
-        /*Row(Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End){f.type?.let{ElevatedButton(onClick = { /*TODO*/ }, /*modifier = Modifier.weight(0.3f)*/){
-            Text(f.type, fontSize = TextUnit(3f, TextUnitType.Em))
-        }}}*/
             Text(text=f.name, modifier = Modifier
                 .padding(end = 5.dp), color = CFT.colors.textColor, fontWeight = FontWeight.Bold ,fontSize = TextUnit(6f, TextUnitType.Em))
         Column {

@@ -33,7 +33,8 @@ private val _darkColorScheme = ExtendedColors(
     green = green_dark,
     blue = blue_dark,
     background = background_dark,
-    searchIconTint = search_icon_dark
+    searchIconTint = search_icon_dark,
+    optionsSel = optionsSel_dark
     )
 
 private val _lightColorScheme = ExtendedColors(
@@ -51,7 +52,8 @@ private val _lightColorScheme = ExtendedColors(
     green = green,
     blue = blue,
     background= background,
-    searchIconTint = search_icon
+    searchIconTint = search_icon,
+    optionsSel = optionsSel
 )
 @Immutable
 data class ExtendedColors(
@@ -66,7 +68,8 @@ data class ExtendedColors(
     val green: Color,
     val blue: Color,
     val background: Color,
-    val searchIconTint: Color
+    val searchIconTint: Color,
+    val optionsSel: Color
 ) {
     val primary: Color get()=material.primary
     val secondary: Color get() = material.secondary
@@ -101,7 +104,7 @@ fun ClinFindTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colors.primary.toArgb()
+            window.statusBarColor = colors.statusBarColor.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }

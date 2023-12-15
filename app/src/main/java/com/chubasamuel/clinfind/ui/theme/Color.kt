@@ -17,8 +17,8 @@ val green_dark = Color(0xFF0B4D15)
 val blue = Color(0xFF0F26A2)
 val blue_dark = Color(0xFF1A409E)
 
-val statusBarColor=Color(0xFF474605)
-val statusBarColor_dark=Color(0xFF081108)
+val statusBarColor=Color(0xFF104F2D)
+val statusBarColor_dark=Color(0xFF07351C)
 
 val cardBg = Color(0xFFdceef8)
 val cardBg_dark = Color(0xFF233B49)
@@ -38,3 +38,6 @@ val textColor_dark  = Color(0xFFC6E7E9)
 
 val search_icon = green
 val search_icon_dark = textColor_dark
+
+val optionsSel = Color(0xFF55AA48)
+val optionsSel_dark = Color(0xFF4F9245)
