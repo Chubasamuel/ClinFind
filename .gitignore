@@ -16,3 +16,5 @@ local.propertiesi
 /key
 app/build
 /app/build
+app/release/app-release.aab
+/app/release/app-release.aab

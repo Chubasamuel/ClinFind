@@ -16,18 +16,19 @@ data class Search(
 
 fun Search.getFilterQuery():SimpleSQLiteQuery{
     val s=this
-    var query = "SELECT * FROM facility WHERE (${s.param} LIKE ? "
+    val param = if(s.paramValue.isNotBlank()) s.param else "name"
+    var query = "SELECT * FROM facility WHERE ($param LIKE ? "
     val li = mutableListOf<String>()
 
     val paramValues=s.paramValue.split(Regex("\\s+"))
     li.add("%"+paramValues[0]+"%")
     if(paramValues.size>1){
     for(i in 1 until paramValues.size){
-        query+=" AND ${s.param} LIKE ? "
+        query+=" AND $param LIKE ? "
         li.add("%${paramValues[i]}%")
     }}
 
-    query+=" OR ${s.param} LIKE ? )"
+    query+=" OR $param LIKE ? )"
     li.add("%"+s.paramValue+"%")
 
     if(s.lga!=null){query+=" AND lga=? "; li.add(s.lga)}
