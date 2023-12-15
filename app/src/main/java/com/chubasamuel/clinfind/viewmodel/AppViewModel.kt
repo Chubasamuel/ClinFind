@@ -1,13 +1,19 @@
 package com.chubasamuel.clinfind.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chubasamuel.clinfind.data.local.Facility
 import com.chubasamuel.clinfind.data.local.Search
+import com.chubasamuel.clinfind.data.remote.Requests
 import com.chubasamuel.clinfind.data.remote.Resource
 import com.chubasamuel.clinfind.data.repository.DataRepository
+import com.chubasamuel.clinfind.util.APIModels
 import com.chubasamuel.clinfind.util.DCORPrefs
+import com.chubasamuel.clinfind.util.UpdatesUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +22,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppViewModel @Inject constructor(private val repo: DataRepository,
-    private val dcorPrefs: DCORPrefs
+    private val dcorPrefs: DCORPrefs, private val requests: Requests
     ) : ViewModel(){
 
     private val _facilities = MutableStateFlow<Resource<List<Facility>?>>(Resource.loading())
@@ -31,6 +37,10 @@ class AppViewModel @Inject constructor(private val repo: DataRepository,
     val types = _types.asStateFlow()
     private val _snack = MutableStateFlow<String?>(null)
     val snack = _snack.asStateFlow()
+    private val _devUpdate = MutableStateFlow<APIModels.APIUpdates?>(null)
+    val devUpdate = _devUpdate.asStateFlow()
+    private val _appUpdate = MutableStateFlow<APIModels.APIUpdates?>(null)
+    val appUpdate = _appUpdate.asStateFlow()
 
     private var jobSearch:Job? = null
     private var jobFetch:Job? = null
@@ -60,6 +70,7 @@ class AppViewModel @Inject constructor(private val repo: DataRepository,
         }
         getFacilitiesLocal()
         getFacilitiesFromApi()
+        mainCheckForUpdates()
     }
     private fun getFacilitiesLocal(){
         if(dcorPrefs.getAppDataFetchedForFirstTime()){
@@ -94,4 +105,29 @@ class AppViewModel @Inject constructor(private val repo: DataRepository,
             }
         }
     }
+    private suspend fun checkForApiUpdates(){
+        UpdatesUtil.checkForUpdatesFromAPI(
+            requests, dcorPrefs,
+            onDevSuccess = {checkForDevUpdate()},
+            onAppSuccess = {checkForAppUpdate()})
+    }
+    private fun checkForDevUpdate(){
+        _devUpdate.value = UpdatesUtil.mainGetDevUpdate(dcorPrefs)
+    }
+    private fun checkForAppUpdate(){
+        _appUpdate.value = UpdatesUtil.mainGetAppUpdate(dcorPrefs)
+    }
+    private fun mainCheckForUpdates(){
+        CoroutineScope(Dispatchers.IO).launch {
+            checkForDevUpdate(); checkForAppUpdate()
+            checkForApiUpdates()
+        }
+    }
+    fun saveDevUpdateInformed(update:APIModels.APIUpdates?){
+        UpdatesUtil.saveLastDevUpdateInformed(dcorPrefs, update)
+    }
+    fun saveAppUpdateInformed(){UpdatesUtil.saveLastAppUpdateInformed(dcorPrefs)}
+    fun resetDevUpdate(){_devUpdate.value=null}
+    fun resetAppUpdate(){_appUpdate.value=null}
+    fun launchPlayStore(context: Context){UpdatesUtil.launchPlayStore(context)}
 }

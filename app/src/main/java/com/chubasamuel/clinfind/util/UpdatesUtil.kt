@@ -30,14 +30,17 @@ object UpdatesUtil {
                 val data = res.body()
                 data?.save(dcorPrefs)
                 delay(2000)
+                Log.w("DCOR DEBUG", "Got App Update -- $data")
                 withContext(Dispatchers.Main){onSuccess()}
             } else {
                 if (retry > 0) {
+                    delay(retry*1000L)
                     getDevUpdates(requests, dcorPrefs, onSuccess,retry - 1)
                 }
             }
         } catch (e: Exception) {
             Log.w("DCOR DEBUG", "Error getting dev update - ${e.message}")
+            e.printStackTrace()
         }
     }
 
@@ -47,15 +50,18 @@ object UpdatesUtil {
             if (res?.isSuccessful == true) {
                 val data = res.body()
                 data?.save(dcorPrefs)
+                Log.w("DCOR DEBUG", "Got Dev Update -- $data")
                 delay(2000)
                 withContext(Dispatchers.Main){onSuccess()}
             } else {
                 if (retry > 0) {
+                    delay(retry*1000L)
                     getAppUpdates(requests, dcorPrefs,onSuccess, retry - 1)
                 }
             }
         } catch (e: Exception) {
             Log.w("DCOR DEBUG", "Error getting app dev - ${e.message}")
+            e.printStackTrace()
         }
     }
 

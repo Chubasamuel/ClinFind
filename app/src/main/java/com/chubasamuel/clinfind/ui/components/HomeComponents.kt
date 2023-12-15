@@ -304,7 +304,7 @@ fun ErrorScreenComp(retryFetch:()->Unit){
             Icon(Icons.Filled.Warning,null,tint= CFT.colors.red)
             Spacer(Modifier.width(15.dp))
             Text("Error occurred while fetching data over the internet.\n" +
-                    "Please check your network and try again.")
+                    "Please check your network and try again.", color = CFT.colors.textColor)
         }
         Spacer(Modifier.height(40.dp))
         Button(onClick = { retryFetch() }) {
