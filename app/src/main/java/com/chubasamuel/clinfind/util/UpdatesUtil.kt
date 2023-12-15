@@ -34,7 +34,7 @@ object UpdatesUtil {
                 withContext(Dispatchers.Main){onSuccess()}
             } else {
                 if (retry > 0) {
-                    delay(retry*1000L)
+                    delay((4-retry)*1000L)
                     getDevUpdates(requests, dcorPrefs, onSuccess,retry - 1)
                 }
             }
@@ -55,7 +55,7 @@ object UpdatesUtil {
                 withContext(Dispatchers.Main){onSuccess()}
             } else {
                 if (retry > 0) {
-                    delay(retry*1000L)
+                    delay((4-retry)*1000L)
                     getAppUpdates(requests, dcorPrefs,onSuccess, retry - 1)
                 }
             }
